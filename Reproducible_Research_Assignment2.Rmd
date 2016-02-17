@@ -1,0 +1,237 @@
+---
+title: "NOAA Storm Events Database Exploration: Most Harmful Events and Most Suffering States"
+author: "A.D. Makarov"
+date: "27th of July 2014"
+output: html_document
+---
+#Synopsis
+The analysis was carried to address two following questions: which storm events observed over the United States since 1950 till 2013 inflicted most damage to the population health and state economy measured by property and crops damage in US Dollars. The step-by-step analysis dedicated to clean the data collected over the given period of time and determined geography, break down the data to represent the addressed patterns and visualize obtained conclusions is presented in the **Data Processing** section. 
+The **Results** section presents the following findings:
+
+- The most damage to the population health was done by the tornado types of weather events, such as tornados, thunderstorm winds, hurricanes etc. These types of events showed the most severe consequences in Illinois (IL), Texas (TX), Missouri (MO), Alabama (AL) and Pennsylvania (PA). Generally speaking, the pattern showed that southeastern states suffered most from these events. Top 20 most severe types of events took **13,373** lives and injured **133,895** inhabitants of the USA;
+- The most economical damage was registred in states located on the West Coast or in tidal regions (California, Florida, Los Angeles etc.) caused mostly by **floods (over over $144B combined damage)**, **hurricanes (over $69B comb.damage)** and draughts **(over $13B comb.damage)**. These events generally caused more damage to the property compared to the agricultural damage, though crops suffered a lot as well. 
+
+#Data Processing
+We collect the data from the U.S. National Oceanic and Atmospheric Administration's (NOAA) storm database available from [the course data storage](https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2 "Storm Data").
+
+First thing to do is to establish connection to this link and grab the data for the following analysis:
+
+```{r, cache=TRUE}
+if (!"repdata-data-StormData.csv.bz2" %in% list.files()) {
+    download.file("https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2",
+                  "repdata-data-StormData.csv.bz2", method="curl")
+} 
+temp <- bzfile("repdata-data-StormData.csv.bz2", "r+")
+stormData <- read.csv(temp, header = TRUE)
+close(temp)
+```
+
+Once we have downloaded the file and loaded data into R, we need to do preprocessing and cleaning of the given data to find and present the references upon two following questions:
+
+- Across the United States, which types of events are most harmful with respect to population health?
+- Across the United States, which types of events have the greatest economic consequences?
+
+##Population health control subset
+Two variables that represent the consequences of the weather events to the inhabitants of the respective geographical zones are `FATALITIES`, which counts the number of the deaths caused by the observed event, and `INJURIES` representing the number of victims non-lethaly suffered from the event.
+
+First look on the summary of these two variables gives us the understanding that **suppressive amount of the events observed did not cause any damage to the population**.
+
+```{r, cache=TRUE}
+summary(stormData$FATALITIES)
+summary(stormData$INJURIES)
+```
+
+Since we are interested in events that have harmful and even fatal repercussions for the population, we can proceed with the across-the-US analysis of observed weather events over the subset of storm data, which includes only the observations where either fatalities or injuries were registred:
+
+```{r, cache=TRUE}
+stormData1 <- stormData[((stormData$FATALITIES > 0) | (stormData$INJURIES > 0)),]
+nrow(stormData1)
+```
+
+What is more, each observation contains a certain amount of information, which will not be necessary for this analysis. To make the analysis more efficient in terms of computational intensity let us reduce the number of variables, leaving only those that we want to adress answering which types of events are most harmful with respect to population health.
+
+These variables will include:
+
+- `BGN_DATE`, `BGN_TIME` and `TIME_ZONE` as they contain the time info about the particular event started and was recorded; 
+- `STATE`, the variable indicating the short code of the state suffered from the particular weather event;
+- `EVTYPE` indicating the event type, which is our main concern in this study;
+- `FATALITIES` and `INJURIES` indicating the number of dead and injured inhabitants in the particular observation.
+
+```{r, cache=TRUE}
+stormData1 <- stormData1[,c("BGN_DATE","BGN_TIME","TIME_ZONE","STATE","EVTYPE","FATALITIES","INJURIES")]
+```
+
+And the final step of the data cleaning will remain only those observations that relate to a particular official state from the US establishment. The list of the state shortcodes can be found in the pre-installed vector `state.abb`
+
+```{r, cache=TRUE}
+stormData1 <- stormData1[stormData1$STATE %in% state.abb,]
+stormData1$STATE <- as.character(stormData1$STATE) # neccessary modifications
+stormData1$EVTYPE <- as.character(stormData1$EVTYPE)
+nrow(stormData1)
+```
+
+##Economic damage control subset
+Following the same logic we will extract the data refering to the economic damage from the observed storm events. Control variables for the economic damage are `PROPDMG`, which accounts for the property damage inflicted, and `CROPDMG` for the crop damage across the states. `PROPDMGEXP` and `CROPDMGEXP` show the multipliers for the numbers stored in `PRODMG` and `CROPDMG` respectively.
+
+As with the fatalities and injuries, **vast majority of the events observed did not have any damage on the property and agriculture**.
+
+```{r, cache=TRUE}
+summary(stormData$PROPDMG)
+summary(stormData$CROPDMG)
+```
+
+Extracting the observations when any valuable damage was done:
+
+```{r, cache=TRUE}
+stormData2 <- stormData[((stormData$PROPDMG > 0) | (stormData$CROPDMG > 0)),]
+nrow(stormData2)
+```
+
+Subsetting the variables that address the economic damage and observations related to particular states:
+
+```{r, cache=TRUE}
+stormData2 <- stormData2[,c("BGN_DATE","BGN_TIME","TIME_ZONE","STATE","EVTYPE","PROPDMG","PROPDMGEXP","CROPDMG","CROPDMGEXP")]
+stormData2 <- stormData2[stormData2$STATE %in% state.abb,]
+stormData2$STATE <- as.character(stormData2$STATE) # neccessary modifications
+stormData2$EVTYPE <- as.character(stormData2$EVTYPE)
+stormData2$PROPDMGEXP <- as.character(stormData2$PROPDMGEXP)
+stormData2$CROPDMGEXP <- as.character(stormData2$CROPDMGEXP)
+nrow(stormData2)
+```
+
+According to [the data dictionary](https://d396qusza40orc.cloudfront.net/repdata%2Fpeer2_doc%2Fpd01016005curr.pdf), the values stored in `PROPDMG` and `CROPDMG` should be leveraged by the exponential signs *(K for 1,000, M for 1,000,000, B for 1,000,000,000)* stored in `PROPDMGEXP` and `CROPDMGEXP` respectively.
+The variable showing the absolute amount of economic damage in US Dollars will be stored in `PROPDMGAMT` and `CROPDMGAMT` respectively:
+
+```{r}
+stormData2 <- stormData2[(stormData2$PROPDMGEXP %in% c("","K","M","B")),] # leaving only meaningful obs
+stormData2 <- stormData2[(stormData2$CROPDMGEXP %in% c("","K","M","B")),]
+stormData2$PROPDMGEXP[stormData2$PROPDMGEXP == ""] <- 1 # substituting conventional suffixes with eng. notation
+stormData2$CROPDMGEXP[stormData2$CROPDMGEXP == ""] <- 1
+stormData2$PROPDMGEXP[stormData2$PROPDMGEXP == "K"] <- 10^3
+stormData2$CROPDMGEXP[stormData2$CROPDMGEXP == "K"] <- 10^3
+stormData2$PROPDMGEXP[stormData2$PROPDMGEXP == "M"] <- 10^6
+stormData2$CROPDMGEXP[stormData2$CROPDMGEXP == "M"] <- 10^6
+stormData2$PROPDMGEXP[stormData2$PROPDMGEXP == "B"] <- 10^9
+stormData2$CROPDMGEXP[stormData2$CROPDMGEXP == "B"] <- 10^9
+stormData2$PROPDMGEXP <- as.numeric(stormData2$PROPDMGEXP)
+stormData2$CROPDMGEXP <- as.numeric(stormData2$CROPDMGEXP)
+stormData2$PROPDMGAMT <- stormData2$PROPDMG * stormData2$PROPDMGEXP # calculating actual damage amount in $
+stormData2$CROPDMGAMT <- stormData2$CROPDMG * stormData2$CROPDMGEXP
+nrow(stormData2)
+```
+
+Note, that the amount of observations when the economic damage was inflicted is bigger than the one when the damage to population was done *(243,488 observations over 21,676 observations respectively)*.
+
+#Results
+Assessing the events which caused damage to population health, first thing to do will be going over the statistics of each event type and amount of fatalities and injuries related to it.
+
+```{r, cache=TRUE}
+sumFat <- sapply(split(stormData1$FATALITIES, stormData1$EVTYPE),sum) 
+sumInj <- sapply(split(stormData1$INJURIES, stormData1$EVTYPE),sum) 
+```
+
+The following vectors address top 20 events judging by amount of people died and injured:
+
+```{r, cache=TRUE}
+top20Fat <- sort(sumFat, TRUE)[1:20]; top20Fat
+top20Inj <- sort(sumInj, TRUE)[1:20]; top20Inj
+```
+
+As these rating have some differences we will proceed discussing only those types of events, that appeared in boths lists:
+
+```{r, cache=TRUE}
+top20Fat[names(top20Fat) %in% names(top20Inj)]
+```
+
+Finally, we run over the states and the overall damage registred in each state respectively:
+
+```{r, cache=TRUE}
+topFat_Inj <- top20Fat[names(top20Fat) %in% names(top20Inj)]
+stormData1 <- stormData1[stormData1$EVTYPE %in% names(topFat_Inj),]
+stateStorm <- data.frame(Fatalities = sapply(split(stormData1$FATALITIES, stormData1$STATE), sum), Injuries = sapply(split(stormData1$INJURIES, stormData1$STATE), sum))
+stateStorm[order(stateStorm$Fatalities, decreasing = TRUE)[1:10],] # top 10 states by fatalities
+```
+
+Combined together top 20 harmful storm events took **13,373** lives and caused serious injures to **133,895** people over the observed period of time *(1950-2013)*. The five most suffering states in terms of civil deaths were **Illinois (IL), Texas (TX), Missouri (MO), Alabama (AL) and Pennsylvania (PA)**, and the overall ranking presented above allows us to conclude that Eastern and Central states suffer much more from the storm events compared to the states located more to the West.
+
+The geographical overview of the harm to the population of the US is presented on the following plots:
+
+```{r, cache=TRUE, fig.height=7, fig.width=8}
+library(ggplot2) # for plotting purposes
+library(gridExtra) # for better arranging plots
+library(maps) # for plotting on US map
+## merging data with map info
+all_states <- map_data("state")
+states_df <- data.frame(STATE = state.abb, region = tolower(state.name))
+stateStorm <- cbind(STATE = rownames(stateStorm), stateStorm)
+stateStorm <- merge(stateStorm, states_df, by = "STATE")
+Total <- merge(all_states, stateStorm, by = "region")
+## plotting fatalities across the states
+f <- ggplot()
+f <- f + geom_polygon(data = Total, aes(x=long, y=lat, group=group, fill=Total$Fatalities), colour = "white") + scale_fill_continuous(low = "thistle2", high = "darkred", guide = "colorbar")
+f <- f + theme_bw() + labs(fill = "Total Number of Fatalities \nCaused by Most Severe Storm Events \nover 1950-2013 Period", title = "Storm Events Fatalities across the US (1950-2013)", x = "", y = "")
+f <- f + scale_y_continuous(breaks=c()) + scale_x_continuous(breaks=c()) + theme(panel.border =  element_blank())
+## plotting injuries across the states
+i <- ggplot()
+i <- i + geom_polygon(data = Total, aes(x=long, y=lat, group=group, fill=Total$Injuries), colour = "white") + scale_fill_continuous(low = "khaki2", high = "darkorange2", guide = "colorbar")
+i <- i + theme_bw() + labs(fill = "Total Number of Injuries \nCaused by Most Severe Storm Events \nover 1950-2013 Period", title = "Storm Events Injuries across the US (1950-2013)", x = "", y = "")
+i <- i + scale_y_continuous(breaks=c()) + scale_x_continuous(breaks=c()) + theme(panel.border =  element_blank())
+## putting the plots on the grid
+grid.arrange(f, i) # first used figure
+```
+
+Using the same strategy we can get the results of event type and geographical distribution of the damage caused by observed storm effects.
+
+As we will deal with the big numbers it will be convenient to introduce formatting function `printMoney`:
+
+```{r, cache=TRUE}
+printMoney <- function(x){
+  format(x, digits=10, nsmall=2, decimal.mark=",", big.mark=".")
+}
+```
+
+```{r, cache=TRUE}
+sumProp <- sapply(split(stormData2$PROPDMGAMT, stormData2$EVTYPE),sum) 
+sumCrop <- sapply(split(stormData2$CROPDMGAMT, stormData2$EVTYPE),sum) 
+top20Prop <- sort(sumProp, TRUE)[1:20]; printMoney(top20Prop)
+top20Crop <- sort(sumCrop, TRUE)[1:20]; printMoney(top20Crop)
+printMoney(top20Prop[names(top20Prop) %in% names(top20Crop)])
+```
+
+Since the property damage is relatively bigger than crops damage in the same observations we will address only the events from the top property damage list which are listed in the top crops damage as well.
+
+```{r, cache=TRUE}
+topProp_Crop <- top20Prop[names(top20Prop) %in% names(top20Crop)]
+stormData2 <- stormData2[stormData2$EVTYPE %in% names(topProp_Crop),]
+stateStorm2 <- data.frame(PropDamage = sapply(split(stormData2$PROPDMGAMT, stormData2$STATE), sum), CropDamage = sapply(split(stormData2$CROPDMGAMT, stormData2$STATE), sum))
+printMoney(stateStorm2[order(stateStorm2$PropDamage, decreasing = TRUE)[1:10],]) # top 10 states by fatalities
+```
+
+As it can be seen, the most damage is inflicted by **flood - over $144B**, **hurricane - over $69B** and **draught events - $13B**, that follows general logic. Floods are typically inflicting the vast damage to towns being flooded and draughts and excessive heat cause serious damage to agricultural infrastructure of states. Opposing to observed sequences for states suffering tornados and thunderstorms causing civilian deaths and injuries, the states demonstrating most property and crops damage concentrate mostly on the West Coast of the US. **California (CA), Florida (FL) and Los Angeles (LA)** are the states that suffered most.
+ 
+The geographical overview of the economic damage inflicted to the US is presented on the following plots:
+
+```{r, cache=TRUE, fig.height=7, fig.width=8}
+options(scipen=999)
+library(ggplot2) # for plotting purposes
+library(gridExtra) # for better arranging plots
+library(maps) # for plotting on US map
+## merging data with map info
+all_states <- map_data("state")
+states_df <- data.frame(STATE = state.abb, region = tolower(state.name))
+stateStorm2 <- cbind(STATE = rownames(stateStorm2), stateStorm2)
+stateStorm2 <- merge(stateStorm2, states_df, by = "STATE")
+Total2 <- merge(all_states, stateStorm2, by = "region")
+## plotting property damage across the states
+p <- ggplot()
+p <- p + geom_polygon(data = Total2, aes(x=long, y=lat, group=group, fill=Total2$PropDamage), colour = "white") + scale_fill_continuous(low = "thistle2", high = "darkred", guide = "colorbar")
+p <- p + theme_bw() + labs(fill = "Total Amount of Property Damage \nCaused by Most Severe Storm Events \nover 1950-2013 Period", title = "Storm Events Property Damage across the US (1950-2013)", x = "", y = "")
+p <- p + scale_y_continuous(breaks=c()) + scale_x_continuous(breaks=c()) + theme(panel.border =  element_blank())
+## plotting crop damage across the states
+c <- ggplot()
+c <- c + geom_polygon(data = Total2, aes(x=long, y=lat, group=group, fill=Total2$CropDamage), colour = "white") + scale_fill_continuous(low = "khaki2", high = "darkorange2", guide = "colorbar")
+c <- c + theme_bw() + labs(fill = "Total Number of Agricultural Damage \nCaused by Most Severe Storm Events \nover 1950-2013 Period", title = "Storm Events Agricultural Damage across the US (1950-2013)", x = "", y = "")
+c <- c + scale_y_continuous(breaks=c()) + scale_x_continuous(breaks=c()) + theme(panel.border =  element_blank())
+## putting the plots on the grid
+grid.arrange(p, c) # first used figure
+```
