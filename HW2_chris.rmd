@@ -1,0 +1,52 @@
+---
+title: "HW2"
+output: html_document
+---
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r}
+# Load required packages
+library(dplyr)
+library(xlsx)
+
+
+floods.raw <- read.xlsx("GlobalFloodsRecord.xls", 1 )
+floods <- floods.raw
+
+floods <- floods %>% 
+    # Remove NA columns
+    select(-starts_with("NA")) %>%
+    # Remove NA rows  
+    filter(!is.na(Register..)) %>%
+    # Remove empty column
+    select(-matches("X.Affected"))
+
+# Clean up variable names
+cleaned.names <- c('register', 'annual.dfo', 'glide','country','other.nations.affected','locations',
+                   'validation','began','ended','duration','dead','displaced','damage','main.cause','severity',
+                   'affected.sq.km','magnitude','centroid.x','centroid.y','news', 'm.6',
+                   'annual.m.6','m.4','annual.m.4','date.began','total.m.6','total.m.4','notes')
+names(floods) <- cleaned.names
+
+# Convert variable classes
+lapply(floods, class)
+
+floods$annual.dfo <- as.numeric(as.character(floods$annual.dfo))
+floods$began <- as.numeric(as.character(floods$began)) + as.Date('1899-12-30')
+floods$ended <- as.numeric(as.character(floods$ended)) + as.Date('1899-12-30')
+floods$date.began <- as.numeric(as.character(floods$date.began)) + as.Date('1899-12-30')
+floods$centroid.x <- as.numeric(as.character(floods$centroid.x))
+floods$centroid.y <- as.numeric(as.character(floods$centroid.y))
+floods$duration <- as.numeric(as.character(floods$duration))
+floods$displaced <- as.numeric(as.character(floods$displaced))
+floods$damage <- as.numeric(as.character(floods$damage))
+floods$affected.sq.km <- as.numeric(as.character(floods$affected.sq.km))
+
+
+save(floods, file= "floods.RData")
+
+load("floods.RData")
+```
