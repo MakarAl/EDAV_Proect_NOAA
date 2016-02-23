@@ -1,4 +1,4 @@
-setwd("~/Documents/Columbia/Exploratory Data Analysis and Visualization/HW2/")
+setwd("~/Documents/Columbia/Exploratory Data Analysis and Visualization/HW2/EDAV_Proect_NOAA/")
 
 library(RNetCDF)
 library(leaflet)
@@ -7,20 +7,17 @@ library(xlsx)
 library(lubridate)
 library(dplyr)
 
+load("floods.RData")
 master_table = read.xlsx("GlobalFloodsRecord.xls", 1 )
 analyses = read.xlsx("GlobalFloodsRecord.xls", 2)
 nc = open.nc("NOAA_Daily_phi_500mb.nc")
 
-a = master_table %>% select(-starts_with("NA")) %>%mutate(x = as.numeric(as.character(Centroid.X)),
-                            y = as.numeric(as.character(Centroid.Y)),
-                            Affected.sq.km =as.numeric(as.character(Affected.sq.km))) %>% 
-  select(Centroid.X, Centroid.Y,Magnitude..M..., Affected.sq.km) %>%na.omit()
 
 
 phi = var.get.nc(nc,"phi")
 
 ## Remove days before 1985-01-01
-phi = phi[,,13515:dim(phi)[3]]
+# phi = phi[,,13515:dim(phi)[3]]
 
 lat =  var.get.nc(nc,"Y")
 long =  var.get.nc(nc,"X")
@@ -38,8 +35,8 @@ new = data.frame(phi = as.vector(phi[,,day]),
                  y = rep(lat, times=rep(144,15))) 
 coordinates(new) = ~x+y
 r2 = rasterFromXYZ(new)
-proj4string(r2) <- CRS("+proj=longlat +ellps=WGS84 ")
-
+proj4string(r2) <- CRS("+proj=longlat +ellps=WGS84")
+spplot(r2)
 
 pal <- colorNumeric("RdYlBu", phi,
                     na.color = "transparent")
@@ -47,7 +44,8 @@ pal <- colorNumeric("RdYlBu", phi,
 leaflet(data = a) %>% addTiles(options=tileOptions(continuousWorld= TRUE)) %>%
   addRasterImage(r2, colors = pal, opacity = 0.5) %>%
   addLegend(pal = pal, values = c(4522, 6054),
-            title = paste("Pressure ", date ,sep=""))%>%
+            title = paste("Pressure ", date ,sep=""))
+%>%
   addCircles(color = "black",lng =~Centroid.X, lat = ~Centroid.Y, weight = ~Affected.sq.km)
   
 
