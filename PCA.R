@@ -23,8 +23,8 @@ for (i in T) {
 
 # stretch the matrix
 phiM <- array(0,dim=c(TLen, XLen*YLen))
-k <- 1
 for (i in T) {
+  k <- 1
   for (n in 1:XLen) {
     for (m in 1:YLen) {
       phiM[i, k] = phi[n, m, i]
