@@ -36,9 +36,11 @@ for (i in T) {
 # function to reverse the matrix
 transformPCA <- function(p, xlim, ylim) {
   res <- matrix(0, nrow = xlim, ncol = ylim)
+  k <- 1
   for (i in 1:xlim) {
     for (j in 1:ylim) {
-      res[i, j] = p[i * j]
+      res[i, j] = p[k]
+      k <- k + 1
     }
   }
   return(res)
