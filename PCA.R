@@ -22,7 +22,7 @@ for (i in T) {
 }
 
 # stretch the matrix
-phiM <- array(0,dim=c(Len, XLen*YLen))
+phiM <- array(0,dim=c(TLen, XLen*YLen))
 k <- 1
 for (i in T) {
   for (n in 1:XLen) {
