@@ -1,0 +1,59 @@
+---
+title: "PCA"
+author: "Ling"
+date: "March 3, 2016"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### Data Set
+* Gridded Geopotential height data ( Longitude: -7.5 to 7.5, Latitude: 40 to 55)
+* Flood record data from Dartmouth Flood Observatory (France only)
+
+#### Trending
+
+The flood reocrd data for France from 1990 to 2015, shows the overall floors events was increasing and reaching peak at 2006, 2007, then started decreasing, however the severe floods (M>6) did not in a decreasing trend.
+
+![](floods.gif)
+<br/>
+
+![](FranceFloodEvents.png)
+
+<br/>
+
+#### Analysis
+
+Ran the PCA for Gridded Geopotential height data on yearly basis.
+
+Step 1: extract France data out of the big data set, save it to a new 3-D matrix (7x7x9496). The longitude is from 7.5W to 7.5E, the latitude is from 40N to 55N, so every day there will be 49 data points, we have totally 9496 days' data.
+
+Step 2: transform the 3-D matrix (7x7x9496) to a new 2-D matrix (9496*49), every row will contain one day's 49 data points.
+
+Step 3: run PCA on this 2-D matrix.
+
+Step 4: transform the PCA component (1x49) back to 2-D matrix (7x7) using the same order step 2 used
+
+After running these steps for 1990 - 2015, here are the first PCA component.
+
+<table>
+<tr><td>![](France_PCA1_1990.png)</td><td>![](France_PCA1_1991.png)</td></tr>
+<tr><td>![](France_PCA1_1992.png)</td><td>![](France_PCA1_1993.png)</td></tr>
+<tr><td>![](France_PCA1_1994.png)</td><td>![](France_PCA1_1995.png)</td></tr>
+<tr><td>![](France_PCA1_1996.png)</td><td>![](France_PCA1_1997.png)</td></tr>
+<tr><td>![](France_PCA1_1998.png)</td><td>![](France_PCA1_1999.png)</td></tr>
+<tr><td>![](France_PCA1_2000.png)</td><td>![](France_PCA1_2001.png)</td></tr>
+<tr><td>![](France_PCA1_2002.png)</td><td>![](France_PCA1_2003.png)</td></tr>
+<tr><td>![](France_PCA1_2004.png)</td><td>![](France_PCA1_2005.png)</td></tr>
+<tr><td>![](France_PCA1_2006.png)</td><td>![](France_PCA1_2007.png)</td></tr>
+<tr><td>![](France_PCA1_2008.png)</td><td>![](France_PCA1_2009.png)</td></tr>
+<tr><td>![](France_PCA1_2010.png)</td><td>![](France_PCA1_2011.png)</td></tr>
+<tr><td>![](France_PCA1_2012.png)</td><td>![](France_PCA1_2013.png)</td></tr>
+<tr><td>![](France_PCA1_2014.png)</td><td>![](France_PCA1_2015.png)</td></tr>
+</table>
+
+
+
+
