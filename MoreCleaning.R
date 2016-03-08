@@ -1,22 +1,20 @@
 library(ggplot2)
 
-setwd("/home/rohitb/Dropbox/Spring16/ExploratoryDataAnalysis/Assignments/Project2/Codes/")
-data = read.csv("../GlobalFloodsRecord_1.csv")
-print(names(data))
+setwd("C:\\Users\\Admin\\Documents\\DigitalIntern2015\\RWorks\\EDAV_Proect_NOAA")
+load("floods.RData")
+load("pressure.RData")
+floods$Nations = NULL
+floods$X.Affected = NULL
+floods$X = NULL
+floods$severity <- as.factor(as.character(floods$severity))
+floods$affected.sq.km <- as.numeric(as.character(floods$affected.sq.km))
+floods$magnitude <- as.numeric(as.character(floods$magnitude))
+floods$damage <- as.numeric(as.character(floods$damage))
+floods$displaced <- as.numeric(as.character(floods$displaced))
+floods$duration <- as.numeric(as.character(floods$duration))
+floods$dead <- as.numeric(as.character(floods$dead))
 
-data$Nations = NULL
-data$X.Affected = NULL
-data$X = NULL
-data$Severity.. <- as.factor(as.character(data$Severity..))
-data$Affected.sq.km <- as.numeric(as.character(data$Affected.sq.km))
-data$Magnitude..M... <- as.numeric(as.character(data$Magnitude..M...))
-data$Damage..USD. <- as.numeric(as.character(data$Damage..USD.))
-data$Displaced <- as.numeric(as.character(data$Displaced))
-data$Severity.. <- as.numeric(as.character(data$Severity..))
-data$Duration.in.Days <- as.numeric(as.character(data$Duration.in.Days))
-data$Dead <- as.numeric(as.character(data$Dead))
-
-summary(data)
+summary(floods)
 
 #typeof(data$Affected.sq.km)
 #kms <- data$Affected.sq.km
@@ -29,15 +27,14 @@ summary(data)
 #scaledData
 
 # Affected.sq.km, Magnitude, Dead, Displaced, Severity, Duration.in.Days, Damage.., 
-data <- data[0:4319,]
-kms <- data$Affected.sq.km
-mag <- data$Magnitude..M...
-#damage <- data$Damage..USD.
-displaced <- data$Displaced
-severity <- data$Severity..
-duration <- data$Duration.in.Days
-dead <- data$Dead
-newFrame <- data.frame(kms,mag,displaced,severity,duration,dead)
+kms <- floods$affected.sq.km
+mag <- floods$magnitude
+displaced <- floods$displaced
+severity <- floods$severity
+duration <- floods$duration
+dead <- floods$dead
+
+newFrame <- data.frame(kms,mag,displaced,duration,dead)
 
 for(i in 1:ncol(newFrame)){
   if (sum(is.na(newFrame[,i]))<15){
@@ -79,8 +76,8 @@ groups <- cutree(cluster, k=5)
 rect.hclust(cluster, k=5, border="red") 
 
 #mcust 10 clusters gaussian with EM
-library(mclust)
-fit <- Mclust(newFrame)
-plot(fit)
-summary(fit)
-clusters <- fit$classification
+#library(mclust)
+#fit <- Mclust(newFrame)
+#plot(fit)
+#summary(fit)
+#clusters <- fit$classification

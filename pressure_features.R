@@ -4,8 +4,7 @@ library(Hmisc)
 
 #read nc file
 #read floods table
-setwd("/home/rohitb/Dropbox/Spring16/ExploratoryDataAnalysis/Assignments/Project2/Codes/EDAV_Proect_NOAA/")
-getwd()
+setwd("C:\\Users\\Admin\\Documents\\DigitalIntern2015\\RWorks\\EDAV_Proect_NOAA")
 load("floods.RData")
 load("pressure.RData")
 
@@ -228,6 +227,8 @@ ggplot(onlyPressure, aes(x= x, y= y))+geom_point()+geom_text(aes(label=row.names
 withoutP.pca <- prcomp(newFrame_withoutP,center=TRUE,scale=TRUE)
 print(withoutP.pca)
 plot(withoutP.pca, type="l")
+pca_withoutP <- predict(withoutP.pca,newFrame_withoutP)
+
 
 withP.pca <- prcomp(newFrame_withP,center=TRUE,scale=TRUE)
 print(withP.pca)
@@ -236,32 +237,50 @@ plot(withP.pca, type="l")
 p.pca <- prcomp(onlyPressure,center=TRUE,scale=TRUE)
 print(p.pca)
 plot(p.pca, type="l")
-
-#Clustering
-cluster_withoutP <- Mclust(newFrame_withoutP)
-summary(cluster_withoutP)
-clusters_withoutP <- cluster_withoutP$classification
-
-cluster_withP <- Mclust(newFrame_withP)
-summary(cluster_withP)
-clusters_withP <- cluster_withP$classification
-
-withoutP1 <- which(clusters_withoutP==1)
-withoutP2 <- which(clusters_withoutP==2)
-withoutP3 <- which(clusters_withoutP==3)
-withoutP4 <- which(clusters_withoutP==4)
+pca_P <- predict(p.pca,onlyPressure)
 
 
-withP1 <- which(clusters_withP==1)
-withP2 <- which(clusters_withP==2)
-withP3 <- which(clusters_withP==3)
-withP4 <- which(clusters_withP==4)
-withP5 <- which(clusters_withP==5)
-withP6 <- which(clusters_withP==6)
-withP7 <- which(clusters_withP==7)
-withP8 <- which(clusters_withP==8)
-withP9 <- which(clusters_withP==9)
+pcaAnalysis_1 <- data.frame(newFrame_withoutP,pca_P[,1])
+corr_1 <- rcorr(as.matrix(pcaAnalysis_1))
+corr_1
 
+pcaAnalysis_2 <- data.frame(newFrame_withoutP,pca_P[,2])
+corr_2 <- rcorr(as.matrix(pcaAnalysis_2))
+corr_2
+
+pcaAnalysis_1_2 <- data.frame(newFrame_withoutP,pca_P[,1:2])
+corr_1_2 <- rcorr(as.matrix(pcaAnalysis_1_2))
+corr_1_2
+
+pcaAnalysisp_1 <- data.frame(pca_withoutP[,1],pca_P[,1])
+plot(pcaAnalysisp_1)
+corr_1 <- rcorr(as.matrix(pcaAnalysisp_1))
+corr_1
+
+pcaAnalysisp_2 <- data.frame(pca_withoutP[,1],pca_P[,2])
+plot(pcaAnalysisp_2)
+corr_1 <- rcorr(as.matrix(pcaAnalysisp_2))
+corr_1
+
+pcaAnalysisp_1_2 <- data.frame(pca_withoutP[,1],pca_P[,1:2])
+corr_1 <- rcorr(as.matrix(pcaAnalysisp_1_2))
+corr_1
+
+pcaAnalysisd_1 <- data.frame(pca_withoutP[,1],onlyPressure)
+corr_1 <- rcorr(as.matrix(pcaAnalysisd_1))
+corr_1
+
+pcaAnalysisd_2 <- data.frame(pca_withoutP[,1],onlyPressure)
+corr_1 <- rcorr(as.matrix(pcaAnalysisd_2))
+corr_1
+
+pcaAnalysisd_1_2 <- data.frame(pca_withoutP[,1:2],onlyPressure)
+corr_1 <- rcorr(as.matrix(pcaAnalysisd_1_2))
+corr_1
+
+
+
+#clustering
 clusters2_withoutP <- hclust(distances_withoutP,method="ward")
 plot(clusters2_withoutP)
 groups <- cutree(clusters2_withoutP, k=5)
