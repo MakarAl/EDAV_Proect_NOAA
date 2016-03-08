@@ -23,6 +23,61 @@ The flood reocrd data for France from 1990 to 2015, shows the overall floors eve
 
 ![](FranceFloodEvents.png)
 
+```{r echo=FALSE}
+load('floods.RData')
+
+floods$date.began.year <- format(floods$date.began, "%Y")
+
+flood_count_by_year <- data.frame(table(floods$date.began.year))
+names(flood_count_by_year) <- c('year','count')
+library(ggplot2)
+
+
+ggplot(data=flood_count_by_year,
+       aes(year, count, group=1)) +
+       geom_line() + 
+      labs(x = "Year", y = "Number of floods", 
+              title = "Global flood count per year") + theme_bw()
+```
+
+```{r echo=FALSE}
+library(reshape)
+
+floods.m.4 <- cast(floods, date.began.year ~ m.4, fun.aggregate=length, value='register')
+floods.m.4['percent'] <- floods.m.4['1'] / (floods.m.4['1'] + floods.m.4['0'])
+
+ggplot(data=floods.m.4,
+       aes(x=date.began.year, y=percent, group=1)) +
+       geom_line() + 
+        labs(x = "Year", y = "Percent of floods", 
+              title = "Percent of floods M>4") + theme_bw()
+
+```
+
+
+```{r echo=FALSE}
+
+floods['count'] <- 1
+floods_by_cause <- xtabs(count ~ main.cause, data=floods)
+floods_by_cause <- sort(floods_by_cause, decreasing=TRUE)
+top.causes <- names(floods_by_cause)[1:5]
+
+other.count <- sum(floods_by_cause) - sum(floods_by_cause[top.causes])
+floods_by_cause <- floods_by_cause[top.causes]
+floods_by_cause['other'] <- other.count
+
+barplot(floods_by_cause, las=1, main='Flood count by main cause', cex.names=.7, horiz=TRUE, xlab='Flood count')
+```
+
+```{r echo=FALSE}
+
+# Floods by magnitude
+hist(floods$magnitude)
+
+hist(log(floods$affected.sq.km))
+```
+
+
 <br/>
 
 #### Analysis

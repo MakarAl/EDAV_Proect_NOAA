@@ -46,6 +46,21 @@ floods$damage <- as.numeric(as.character(floods$damage))
 floods$affected.sq.km <- as.numeric(as.character(floods$affected.sq.km))
 
 
+
+levels(floods$main.cause)[grepl('^Tropical storm', levels(floods$main.cause))] <- "Tropical Storm"
+levels(floods$main.cause)[grepl('^Tropical Storm', levels(floods$main.cause))] <- "Tropical Storm"
+levels(floods$main.cause)[grepl('^Tropical Cyclone', levels(floods$main.cause))] <- "Tropical Cyclone"
+levels(floods$main.cause)[grepl('^Tropical cyclone', levels(floods$main.cause))] <- "Tropical Cyclone"
+levels(floods$main.cause)[grepl('^Torrential', levels(floods$main.cause))] <- "Torrential Rain"
+levels(floods$main.cause)[grepl('^Heavy', levels(floods$main.cause))] <- "Heavy Rain"
+levels(floods$main.cause)[grepl('^heavy', levels(floods$main.cause))] <- "Heavy Rain"
+levels(floods$main.cause)[grepl('^Rain', levels(floods$main.cause))] <- "Rain"
+levels(floods$main.cause)[grepl('^Dam ', levels(floods$main.cause))] <- "Dam failure"
+levels(floods$main.cause)[grepl('^Typhoon', levels(floods$main.cause))] <- "Typhoon"
+levels(floods$main.cause)[grepl('^Monsoo', levels(floods$main.cause))] <- "Monsoon"
+levels(floods$main.cause)[grepl('^Hurricane', levels(floods$main.cause))] <- "Hurricane"
+
+
 save(floods, file= "floods.RData")
 
 load("floods.RData")
