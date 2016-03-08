@@ -1,0 +1,117 @@
+---
+title: "NOAA Data Set"
+author: "Aleksandr Makarov (adm2190)"
+date: "26 February 2016"
+output: html_document
+runtime: shiny
+---
+
+## Flood Exploration
+
+The main goal of this exploration research was to search for the patterns in the floods recorded in one of the datasets provided for the project and to understand what kind of information can lead to deeper understanding of the events and conditions that affect floods and their destructive impact on countries and environment.
+
+To get the broader view of the dataset provided in *`GlobalFloodRecords.xlsx`* we explore the geography of the floods recorded in the dataset from the global prospective emphisizing these events according to their relative damage and effect on the local population.
+
+```{r, echo=FALSE}
+library(shiny)
+library(shinyGlobe)
+library(lubridate)
+
+getFloodDataDisplaced <- function() {
+    
+    load("floods.RData")
+    floods <- floods[(floods$displaced > 100), 
+                     c("centroid.y", "centroid.x", "displaced")]
+    colnames(floods) <- c("Latitude", "Longitude", "Displaced")
+    #which max displaced number to select: relative or absolute
+    floods$Displaced <- floods$Displaced / max(floods$Displaced, na.rm = TRUE)
+    
+    return(floods[complete.cases(floods),])
+    
+}
+
+getFloodDataDamage <- function() {
+    
+    load("floods.RData")
+    floods <- floods[(floods$displaced > 100), 
+                     c("centroid.y", "centroid.x", "damage")]
+    colnames(floods) <- c("Latitude", "Longitude", "Damage")
+    #which max displaced number to select: relative or absolute
+    floods$Damage <- floods$Damage / max(floods$Damage, na.rm = TRUE)
+    
+    return(floods[complete.cases(floods),])
+    
+}
+
+getDataByCountry <- function() {
+    
+    floods <- load("floods.RData")
+    countries <- sort(unique(as.character(floods$country)))
+    countries <- unique(gsub('\302\240', '', countries))
+    countries <- sort(unique(gsub("^\\s+|\\s+$", "", countries)))
+    
+}
+
+server1 <- function(input, output, session) {
+    
+    output$globe <- renderGlobe({
+        getFloodDataDisplaced()
+    })
+}
+
+server2 <- function(input, output, session) {
+    
+    output$globe <- renderGlobe({
+        getFloodDataDamage()
+    })
+}
+
+ui1 <- shinyUI(
+    tagList(
+        globeOutput("globe"),
+        absolutePanel(id = "controls", class = "panel panel-default", 
+                    fixed = TRUE,
+                    draggable = TRUE, top = 5, left = 10, right = "auto", bottom = "auto",
+                    width = 250, height = "auto", 
+                    h4("The Number of Displaced People")
+                    )
+    )  
+)
+
+ui2 <- shinyUI(
+    tagList(
+        globeOutput("globe"),
+        absolutePanel(id = "controls", class = "panel panel-default", 
+                    fixed = TRUE,
+                    draggable = TRUE, top = 5, left = 10, right = "auto", bottom = "auto",
+                    width = 250, height = "auto", 
+                    h4("The Value of Property Damage")
+                    ),
+        div(id="info", tagList(
+            HTML(
+                'Made with webGL & shinyGlobe'
+            )
+        ))
+    )  
+)
+
+shinyApp(
+  ui = ui1, server = server1,
+  options=list(
+    width="50%", height=450
+  )
+)
+
+shinyApp(
+  ui = ui2, server = server2,
+  options=list(
+    width="50%", height=450
+  )
+)
+```
+
+As we can see on these visuals, Eastern Asian countries demonstrate the highest rate of people displaced due to the repercussions of the floods in that region as well as a serious damage profile measured in dollars. One of the reasons supporting such observation might be the fact that India and China along with Indonesia and Malaysia are indeed the biggest countries in the world in terms of both absolute number and density of population, and historically the vast amount of people settle down and live next to the sea shores and rivers. All this historical and social development leads to the higher number of people affected by the floods events in these regions, which can be easily inherited from the above charts. What is more, according to the ***Seismic Monitor*** South Eastern Asian region demonstrates the highest seismic profile surrounded by Indian and Pacific Ocean, which leads to higher frequency of floods and flood-related events, that affect local population.
+
+Another important observation that can be made from these visuals points the attention to the fact that the highest registered damage profile does not quite follow the affected population profile. Still the highest property damage events are registered in coastal and mainland China provinces of Fujian, Zhejiang, Minqing and others along with Sichuan, Hunan, Hubei and others. However, the other major events occured in European countries *(Austria, Romania, UK)* and North and Central America regions *(United States, Mexico)*. This might lead us to the hypothesis that the property damage is higher in the European and American countries due to the higher cost of infrastructure in these countries as well as more expensive currency *(all the recorded damage is ranked according to its relative USD value)*. However, this to be said that not every flood event registered in the dataset has a representative record of the property damage profile, as in the most cases it is extremely difficult to obtain such statistics, thus this exploration cannot be considered as fully representative.
+
+
