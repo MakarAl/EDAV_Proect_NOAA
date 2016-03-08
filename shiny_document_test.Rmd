@@ -1,0 +1,88 @@
+---
+title: "NOAA Data Set"
+author: "Aleksandr Makarov (adm2190)"
+date: "26 February 2016"
+output: html_document
+runtime: shiny
+---
+
+## Flood Exploration
+
+Implement summary table of displaced and dead people and total damage by country
+Clean country names
+Implement leaflet map with bars=magnitude & shapes=splashes & color=severity
+
+Mine the causes of flood - filter out the ones that are technogeneous, leave only natural caused floods.
+
+Move to Analysis of preasure testing whether the discovered preasure patterns visually correlate anyhow with locations and spreads of floods.
+
+```{r, echo=FALSE}
+library(shiny)
+library(shinyGlobe)
+library(lubridate)
+
+getFloodData <- function() {
+    
+    load("floods.RData")
+    floods <- floods[(floods$displaced > 100), 
+                     c("centroid.y", "centroid.x", "displaced")]
+    colnames(floods) <- c("Latitude", "Longitude", "Displaced")
+    #which max displaced number to select: relative or absolute
+    floods$Displaced <- floods$Displaced / max(floods$Displaced, na.rm = TRUE)
+    
+    return(floods[complete.cases(floods),])
+    
+}
+
+getDataByCountry <- function() {
+    
+    floods <- load("floods.RData")
+    countries <- sort(unique(as.character(floods$country)))
+    countries <- unique(gsub('\302\240', '', countries))
+    countries <- sort(unique(gsub("^\\s+|\\s+$", "", countries)))
+    
+}
+
+server <- function(input, output, session) {
+    
+    output$globe <- renderGlobe({
+        getFloodData()
+    })
+}
+
+ui <- shinyUI(
+    tagList(
+#         tags$head(
+#             includeCSS("styles.css")
+#         ),
+        globeOutput("globe"),
+        absolutePanel(id = "controls", class = "panel panel-default", 
+                    fixed = TRUE,
+                    draggable = TRUE, top = 60, left = "auto", right = 20, bottom = "auto",
+                    width = 250, height = "auto", 
+                    h3("The Globe Overview of Floods")
+                    ),
+        div(id="info", tagList(
+            HTML(
+                'Made with shinyGlobe'
+            )
+        ))
+    )  
+)
+
+shinyApp(
+  ui = ui, server = server,
+  options=list(
+    width="100%", height=450
+  )
+)
+```
+
+Note the use of the `height` parameter to determine how much vertical space the embedded application should occupy.
+
+You can also use the `shinyApp` function to define an application inline rather then in an external directory.
+
+In all of R code chunks above the `echo = FALSE` attribute is used. This is to prevent the R code within the chunk from rendering in the document alongside the Shiny components.
+
+
+
