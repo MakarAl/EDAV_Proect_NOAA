@@ -1,3 +1,33 @@
+---
+title: "Flood effect analysis in relation with Pressure"
+date: "March 7, 2016"
+output: html_document
+---
+
+In this section, we intend to find the relation between floods, their after-effects (such as damaged area, dead, magnitude etc), and the pressure. Before going into the experiment details, we will introduce our way of collecting pressure data and our intuition behind opting for these metrics. 
+
+
+ Although natural factors such as precipitation, soil erotion, and mishandling of large dams are the main culprit for floods, we want to understand the pressure patterns and their impact on the after effects of the flood. We believe the pressure at a certain day or at a certain time will not have as adverse affect as a flood. To that extent, we decided to divide the pressure data based on 2 types of intervals. 
+ 
+ * Intervals based on days 
+ * Intervals based on distance.
+ 
+ *Intervals based on days* look at a fixed interval of 5, 10 , and 15 days before the start of the flood and the otehr interval being the duration of the flood whereas *Intervals based on distance* looks at the area around the starting point of the flood. We ignore the presence of any other water bodies surrounding the starting point due to the unavaiability of the information. We took the *mean* and *standard deviation* of pressure across these intervals. These intervals give us 16 pressure points for each flood. 
+ 
+ Among the attributes of a flood, we consider these:
+ 
+ * Affected.Square. Kilometers
+ * Magnitude of the flood
+ * Number of persons displaced
+ * Severity of the flood
+ * Duration of the flood 
+ * Casualities due to the flood. 
+ 
+ We normalized all the data points (including the pressure values) for each flood and we replaced the missing points using the *mean* value. We first look at different statistics pertaining to the flood data alone after which we include the pressure data for analysis. We find the interval and the pressure value which has high correlation with each of the flood statistics as well as we extract principal components to further analyse. 
+ 
+ In the following R code, we have the data cleaning and pre-processing for the required functions at the later point. Also, we have the functions to extract the intervals discussed above for each flood data. 
+ 
+```{r echo=FALSE, include=FALSE}
 library(ggplot2)
 library(mclust)
 library(Hmisc)
@@ -5,14 +35,12 @@ library(Hmisc)
 #read nc file
 #read floods table
 setwd("/home/rohitb/Dropbox/Spring16/ExploratoryDataAnalysis/Assignments/Project2/Codes/EDAV_Proect_NOAA/")
-getwd()
 load("floods.RData")
 load("pressure.RData")
 
 #leave meaningful columns, remove degenerate cases
 floods <- floods[(floods$began > as.Date("1985-01-01")) & (floods$centroid.y >= 35) & (floods$centroid.y <= 70),
                  c(1,4:27)]
-floods <- floods[!is.na()]
 
 get_features <- function(x, y, began, ended, interval_length, unit_length) {
     
@@ -107,8 +135,6 @@ for (i in 1:nrow(floods)) {
     }
 }
 
-names(floods)
-
 floods$Nations = NULL
 floods$X.Affected = NULL
 floods$X = NULL
@@ -196,48 +222,50 @@ for(i in 1:ncol(onlyPressure)){
 distances_withoutP <- dist(newFrame_withoutP)
 distances_withP <- dist(newFrame_withP)
 distances_p <- dist(onlyPressure)
+```
 
-#MDS
-#Initial analysis to plot the 3 dataframes onto an MDS plot to find the distributions
+We have got all the data that we require for further analysis. In a nut shell, we got the pressure points as described above, created new datasets including these pressure points. Normalized all the data so that the scale of the data becomes irrelavant for the analysis. From here, we concentrate on extracting the analysis. 
+We first start our analysis by analyzing how the *MDS* plots look when we reduce the data to 2 dimensions. 
 
+```{r echo=FALSE}
 fit_withoutP <- cmdscale(distances_withoutP,eig=TRUE, k=2) 
 x <- fit_withoutP$points[,1]
 y <- fit_withoutP$points[,2]
-#plot(x, y, xlab="Coordinate 1", ylab="Coordinate 2",
-#     main="Metric MDS", type="n")
-#text(x, y, labels = row.names(newFrame), cex=.7) 
 ggplot(newFrame_withoutP, aes(x= x, y= y))+geom_point()+geom_text(aes(label=row.names(newFrame_withoutP)),hjust=0, vjust=0, check_overlap = TRUE)+theme(legend.position = "none")
 
 fit_withP <- cmdscale(distances_withP,eig=TRUE, k=2) 
 x <- fit_withP$points[,1]
 y <- fit_withP$points[,2]
-#plot(x, y, xlab="Coordinate 1", ylab="Coordinate 2",
-#     main="Metric MDS", type="n")
-#text(x, y, labels = row.names(newFrame), cex=.7) 
 ggplot(newFrame_withP, aes(x= x, y= y))+geom_point()+geom_text(aes(label=row.names(newFrame_withP)),hjust=0, vjust=0, check_overlap = TRUE)+theme(legend.position = "none")
+```
 
+We can see how the flood data varied with adding the pressure points. We can see that pressure data scatters the flood data, implying that we have some interaction effect between floods and pressure data. We will revisit the effect of pressure on the floods when we do the PCA and cluster analysis. 
+
+An interesting observation here is the MDS of only the data related to pressure. We can see that the effect of the other flood factors is largely negated and pressure dominated the distances in MDS. It would be interesting to realize the effects of pressure later in the next analysis. 
+
+```{r echo=FALSE}
 fit_P <- cmdscale(distances_p,eig=TRUE, k=2) 
 x <- fit_P$points[,1]
 y <- fit_P$points[,2]
-#plot(x, y, xlab="Coordinate 1", ylab="Coordinate 2",
-#     main="Metric MDS", type="n")
-#text(x, y, labels = row.names(newFrame), cex=.7) 
 ggplot(onlyPressure, aes(x= x, y= y))+geom_point()+geom_text(aes(label=row.names(onlyPressure)),hjust=0, vjust=0, check_overlap = TRUE)+theme(legend.position = "none")
 
+```
+
+We now move to perform PCA on these two different datasets and see how the principal components vary by adding the pressure data. 
+
+```{r echo=FALSE}
 #PCA
 withoutP.pca <- prcomp(newFrame_withoutP,center=TRUE,scale=TRUE)
-print(withoutP.pca)
 plot(withoutP.pca, type="l")
 
 withP.pca <- prcomp(newFrame_withP,center=TRUE,scale=TRUE)
-print(withP.pca)
 plot(withP.pca, type="l")
 
-p.pca <- prcomp(onlyPressure,center=TRUE,scale=TRUE)
-print(p.pca)
-plot(p.pca, type="l")
+```
 
-#Clustering
+We can see that adding pressure alters the principal components too. Lets also present the results of clustering. For clustering, we first try *MClust* method in R to identify the algorithm that performs the best clustering and see if both the datasets return the same clusters.
+
+```{r echo=FALSE}
 cluster_withoutP <- Mclust(newFrame_withoutP)
 summary(cluster_withoutP)
 clusters_withoutP <- cluster_withoutP$classification
@@ -245,32 +273,5 @@ clusters_withoutP <- cluster_withoutP$classification
 cluster_withP <- Mclust(newFrame_withP)
 summary(cluster_withP)
 clusters_withP <- cluster_withP$classification
+```
 
-withoutP1 <- which(clusters_withoutP==1)
-withoutP2 <- which(clusters_withoutP==2)
-withoutP3 <- which(clusters_withoutP==3)
-withoutP4 <- which(clusters_withoutP==4)
-
-
-withP1 <- which(clusters_withP==1)
-withP2 <- which(clusters_withP==2)
-withP3 <- which(clusters_withP==3)
-withP4 <- which(clusters_withP==4)
-withP5 <- which(clusters_withP==5)
-withP6 <- which(clusters_withP==6)
-withP7 <- which(clusters_withP==7)
-withP8 <- which(clusters_withP==8)
-withP9 <- which(clusters_withP==9)
-
-clusters2_withoutP <- hclust(distances_withoutP,method="ward")
-plot(clusters2_withoutP)
-groups <- cutree(clusters2_withoutP, k=5)
-rect.hclust(clusters2_withoutP, k=5, border="red") 
-
-clusters2_withP <- hclust(distances_withP,method="ward")
-plot(clusters2_withP)
-groups <- cutree(clusters2_withP, k=5)
-rect.hclust(clusters2_withP, k=5, border="red") 
-
-corr <- rcorr(as.matrix(newFrame_withP))
-corr
