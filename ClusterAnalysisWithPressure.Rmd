@@ -1,7 +1,10 @@
 ---
 title: "Flood effect analysis in relation with Pressure"
 date: "March 7, 2016"
-output: html_document
+output: 
+  html_document: 
+    fig_caption: yes
+    keep_md: yes
 ---
 
 In this section, we intend to find the relation between floods, their after-effects (such as damaged area, dead, magnitude etc), and the pressure. Before going into the experiment details, we will introduce our way of collecting pressure data and our intuition behind opting for these metrics. 
@@ -34,7 +37,7 @@ library(Hmisc)
 
 #read nc file
 #read floods table
-setwd("C:\\Users\\Admin\\Documents\\DigitalIntern2015\\RWorks\\EDAV_Proect_NOAA")
+setwd("/home/rohitb/Dropbox/Spring16/ExploratoryDataAnalysis/Assignments/Project2/Codes/EDAV_Proect_NOAA")
 load("floods.RData")
 load("pressure.RData")
 
