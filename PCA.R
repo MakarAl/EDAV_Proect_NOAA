@@ -2,7 +2,7 @@ library(RNetCDF)
 library(qpcR)
 library(maps)
 
-source("Filled.contour2.R")
+source("Filled.contour3.R")
 source("Filled.legend.R")
 
 # transform 3-D matrix to 2-D matrix
