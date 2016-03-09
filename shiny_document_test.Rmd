@@ -8,20 +8,16 @@ runtime: shiny
 
 ## Flood Exploration
 
-Implement summary table of displaced and dead people and total damage by country
-Clean country names
-Implement leaflet map with bars=magnitude & shapes=splashes & color=severity
+The main goal of this exploration research was to search for the patterns in the floods recorded in one of the datasets provided for the project and to understand what kind of information can lead to deeper understanding of the events and conditions that affect floods and their destructive impact on countries and environment.
 
-Mine the causes of flood - filter out the ones that are technogeneous, leave only natural caused floods.
-
-Move to Analysis of preasure testing whether the discovered preasure patterns visually correlate anyhow with locations and spreads of floods.
+To get the broader view of the dataset provided in *`GlobalFloodRecords.xlsx`* we explore the geography of the floods recorded in the dataset from the global prospective emphisizing these events according to their relative damage and effect on the local population.
 
 ```{r, echo=FALSE}
 library(shiny)
 library(shinyGlobe)
 library(lubridate)
 
-getFloodData <- function() {
+getFloodDataDisplaced <- function() {
     
     load("floods.RData")
     floods <- floods[(floods$displaced > 100), 
@@ -29,6 +25,19 @@ getFloodData <- function() {
     colnames(floods) <- c("Latitude", "Longitude", "Displaced")
     #which max displaced number to select: relative or absolute
     floods$Displaced <- floods$Displaced / max(floods$Displaced, na.rm = TRUE)
+    
+    return(floods[complete.cases(floods),])
+    
+}
+
+getFloodDataDamage <- function() {
+    
+    load("floods.RData")
+    floods <- floods[(floods$displaced > 100), 
+                     c("centroid.y", "centroid.x", "damage")]
+    colnames(floods) <- c("Latitude", "Longitude", "Damage")
+    #which max displaced number to select: relative or absolute
+    floods$Damage <- floods$Damage / max(floods$Damage, na.rm = TRUE)
     
     return(floods[complete.cases(floods),])
     
@@ -43,46 +52,64 @@ getDataByCountry <- function() {
     
 }
 
-server <- function(input, output, session) {
+server1 <- function(input, output, session) {
     
     output$globe <- renderGlobe({
-        getFloodData()
+        getFloodDataDisplaced()
     })
 }
 
-ui <- shinyUI(
+server2 <- function(input, output, session) {
+    
+    output$globe <- renderGlobe({
+        getFloodDataDamage()
+    })
+}
+
+ui1 <- shinyUI(
     tagList(
-#         tags$head(
-#             includeCSS("styles.css")
-#         ),
         globeOutput("globe"),
         absolutePanel(id = "controls", class = "panel panel-default", 
                     fixed = TRUE,
-                    draggable = TRUE, top = 60, left = "auto", right = 20, bottom = "auto",
+                    draggable = TRUE, top = 5, left = 10, right = "auto", bottom = "auto",
                     width = 250, height = "auto", 
-                    h3("The Globe Overview of Floods")
+                    h4("The Number of Displaced People")
+                    )
+    )  
+)
+
+ui2 <- shinyUI(
+    tagList(
+        globeOutput("globe"),
+        absolutePanel(id = "controls", class = "panel panel-default", 
+                    fixed = TRUE,
+                    draggable = TRUE, top = 5, left = 10, right = "auto", bottom = "auto",
+                    width = 250, height = "auto", 
+                    h4("The Value of Property Damage")
                     ),
         div(id="info", tagList(
             HTML(
-                'Made with shinyGlobe'
+                'Made with webGL & shinyGlobe'
             )
         ))
     )  
 )
 
 shinyApp(
-  ui = ui, server = server,
+  ui = ui1, server = server1,
   options=list(
-    width="100%", height=450
+    width="50%", height=450
+  )
+)
+
+shinyApp(
+  ui = ui2, server = server2,
+  options=list(
+    width="50%", height=450
   )
 )
 ```
 
-Note the use of the `height` parameter to determine how much vertical space the embedded application should occupy.
-
-You can also use the `shinyApp` function to define an application inline rather then in an external directory.
-
-In all of R code chunks above the `echo = FALSE` attribute is used. This is to prevent the R code within the chunk from rendering in the document alongside the Shiny components.
-
+As we can see on these visuals, Eastern Asian countries demonstrate the highest rate of people displaced due to the repercussions of the floods in that region as well as a serious damage profile measured in dollars. One of the reasons supporting such observation might be the fact that India and China along with Indonesia and Malaysia are indeed the biggest countries in the world 
 
 
