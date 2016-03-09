@@ -1,7 +1,10 @@
 ---
 title: "Flood effect analysis in relation with Pressure"
 date: "March 7, 2016"
-output: html_document
+output: 
+  html_document: 
+    fig_caption: yes
+    keep_md: yes
 ---
 
 In this section, we intend to find the relation between floods, their after-effects (such as damaged area, dead, magnitude etc), and the pressure. Before going into the experiment details, we will introduce our way of collecting pressure data and our intuition behind opting for these metrics. 
@@ -34,7 +37,7 @@ library(Hmisc)
 
 #read nc file
 #read floods table
-setwd("/home/rohitb/Dropbox/Spring16/ExploratoryDataAnalysis/Assignments/Project2/Codes/EDAV_Proect_NOAA/")
+setwd("/home/rohitb/Dropbox/Spring16/ExploratoryDataAnalysis/Assignments/Project2/Codes/EDAV_Proect_NOAA")
 load("floods.RData")
 load("pressure.RData")
 
@@ -241,7 +244,7 @@ ggplot(newFrame_withP, aes(x= x, y= y))+geom_point()+geom_text(aes(label=row.nam
 
 We can see how the flood data varied with adding the pressure points. We can see that pressure data scatters the flood data, implying that we have some interaction effect between floods and pressure data. We will revisit the effect of pressure on the floods when we do the PCA and cluster analysis. 
 
-An interesting observation here is the MDS of only the data related to pressure. We can see that the effect of the other flood factors is largely negated and pressure dominated the distances in MDS. It would be interesting to realize the effects of pressure later in the next analysis. 
+An interesting observation here is the MDS of only the data related to pressure. We can see that the effect of the other flood factors is exactly negated and pressure dominated the distances in MDS. It would be interesting to realize the effects of pressure later in the next analysis. 
 
 ```{r echo=FALSE}
 fit_P <- cmdscale(distances_p,eig=TRUE, k=2) 
@@ -256,22 +259,54 @@ We now move to perform PCA on these two different datasets and see how the princ
 ```{r echo=FALSE}
 #PCA
 withoutP.pca <- prcomp(newFrame_withoutP,center=TRUE,scale=TRUE)
-plot(withoutP.pca, type="l")
+plot(withoutP.pca, type="l",main="PCA of floods without Pressure variables")
+pca_withoutP <- predict(withoutP.pca,newFrame_withoutP)
 
 withP.pca <- prcomp(newFrame_withP,center=TRUE,scale=TRUE)
-plot(withP.pca, type="l")
+plot(withP.pca, type="l", main="PCA of floods including Pressure variables")
 
 ```
 
-We can see that adding pressure alters the principal components too. Lets also present the results of clustering. For clustering, we first try *MClust* method in R to identify the algorithm that performs the best clustering and see if both the datasets return the same clusters.
+We can see that adding pressure alters the principal components too. Lets also present the results of clustering. 
 
 ```{r echo=FALSE}
-cluster_withoutP <- Mclust(newFrame_withoutP)
-summary(cluster_withoutP)
-clusters_withoutP <- cluster_withoutP$classification
+#cluster_withoutP <- Mclust(newFrame_withoutP, initialization=list(subset=sample(1:nrow(newFrame_withoutP), size=300)))
+#summary(cluster_withoutP)
+#plot(cluster_withoutP)
+#clusters_withoutP <- cluster_withoutP$classification
 
-cluster_withP <- Mclust(newFrame_withP)
-summary(cluster_withP)
-clusters_withP <- cluster_withP$classification
+#cluster_withP <- Mclust(newFrame_withP, initialization=list(subset=sample(1:nrow(newFrame_withP), size=300)))
+#summary(cluster_withP)
+#clusters_withP <- cluster_withP$classification
 ```
 
+
+```{r echo=FALSE, include=FALSE}
+cluster2_withoutp <- hclust(distances_withoutP,method="ward")
+cluster2_withP <- hclust(distances_withP,method="ward")
+```
+
+```{r echo=FALSE}
+plot(cluster2_withoutp, main="Clusters without including Pressure data")
+groups <- cutree(cluster2_withoutp, k=5)
+rect.hclust(cluster2_withoutp, k=5, border="red") 
+plot(cluster2_withP, main="Clusters after including Pressure data")
+groups <- cutree(cluster2_withP, k=5)
+rect.hclust(cluster2_withP, k=5, border="red") 
+```
+
+Adding pressure for clustering alters the clusters. The differences in clusters are also visible when we draw a dendogram of clusters performed using hierarchical clustering. We also performed Model based clustering using *mclut* and observed that the number of clusters formed by adding pressure (10) vary greatly from the clusters formed without adding pressure(4). 
+
+In the next segment, we compare the correlation between PCA's of floods and pressure data to get an understanding of the important attributes.
+
+```{r}
+p.pca <- prcomp(onlyPressure,center=TRUE,scale=TRUE)
+pca_P <- predict(p.pca,onlyPressure)
+corr <- rcorr(as.matrix(newFrame_withP))
+pcaAnalysisd_1 <- data.frame(pca_withoutP[,1],onlyPressure)
+corr_1 <- rcorr(as.matrix(pcaAnalysisd_1))
+pcaAnalysis_1 <- data.frame(newFrame_withoutP,pca_P[,1])
+corr_1 <- rcorr(as.matrix(pcaAnalysis_1))
+```
+
+From PCA analysis, we found that the co-relation is very high between the variables of the floods. So we did PCA to reduce the dimensions to 1 or 2 for floods, which can help us identify the relation with the pressure across various intervals. We couldn't find a compelling correlation with any of the pressure points but we found that on average, standard deviation related pressure points had more influence on the flood parameters when compared with the average value, thereby confirming that changes in the pressure has more effect on the actual amount of pressure. 
