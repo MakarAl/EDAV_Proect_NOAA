@@ -234,12 +234,12 @@ We first start our analysis by analyzing how the *MDS* plots look when we reduce
 fit_withoutP <- cmdscale(distances_withoutP,eig=TRUE, k=2) 
 x <- fit_withoutP$points[,1]
 y <- fit_withoutP$points[,2]
-ggplot(newFrame_withoutP, aes(x= x, y= y))+geom_point()+geom_text(aes(label=row.names(newFrame_withoutP)),hjust=0, vjust=0, check_overlap = TRUE)+theme(legend.position = "none")
+ggplot(newFrame_withoutP, aes(x= x, y= y))+geom_point()+geom_text(aes(label=row.names(newFrame_withoutP)),hjust=0, vjust=0, check_overlap = TRUE)+labs(title = "MDS for the floods without Pressure features")
 
 fit_withP <- cmdscale(distances_withP,eig=TRUE, k=2) 
 x <- fit_withP$points[,1]
 y <- fit_withP$points[,2]
-ggplot(newFrame_withP, aes(x= x, y= y))+geom_point()+geom_text(aes(label=row.names(newFrame_withP)),hjust=0, vjust=0, check_overlap = TRUE)+theme(legend.position = "none")
+ggplot(newFrame_withP, aes(x= x, y= y))+geom_point()+geom_text(aes(label=row.names(newFrame_withP)),hjust=0, vjust=0, check_overlap = TRUE)+labs(title = "MDS for floods with Pressure features")
 ```
 
 We can see how the flood data varied with adding the pressure points. We can see that pressure data scatters the flood data, implying that we have some interaction effect between floods and pressure data. We will revisit the effect of pressure on the floods when we do the PCA and cluster analysis. 
@@ -250,7 +250,7 @@ An interesting observation here is the MDS of only the data related to pressure.
 fit_P <- cmdscale(distances_p,eig=TRUE, k=2) 
 x <- fit_P$points[,1]
 y <- fit_P$points[,2]
-ggplot(onlyPressure, aes(x= x, y= y))+geom_point()+geom_text(aes(label=row.names(onlyPressure)),hjust=0, vjust=0, check_overlap = TRUE)+theme(legend.position = "none")
+ggplot(onlyPressure, aes(x= x, y= y))+geom_point()+geom_text(aes(label=row.names(onlyPressure)),hjust=0, vjust=0, check_overlap = TRUE)+labs(title = "MDS for only Pressure features")
 
 ```
 
@@ -259,11 +259,11 @@ We now move to perform PCA on these two different datasets and see how the princ
 ```{r echo=FALSE}
 #PCA
 withoutP.pca <- prcomp(newFrame_withoutP,center=TRUE,scale=TRUE)
-plot(withoutP.pca, type="l",main="PCA of floods without Pressure variables")
+plot(withoutP.pca, type="l",main="PCA of floods without Pressure variables", xlab="Principal Components")
 pca_withoutP <- predict(withoutP.pca,newFrame_withoutP)
 
 withP.pca <- prcomp(newFrame_withP,center=TRUE,scale=TRUE)
-plot(withP.pca, type="l", main="PCA of floods including Pressure variables")
+plot(withP.pca, type="l", main="PCA of floods including Pressure variables", xlab="Principal Components")
 
 ```
 
@@ -282,15 +282,15 @@ We can see that adding pressure alters the principal components too. Lets also p
 
 
 ```{r echo=FALSE, include=FALSE}
-cluster2_withoutp <- hclust(distances_withoutP,method="ward")
-cluster2_withP <- hclust(distances_withP,method="ward")
+cluster2_withoutp <- hclust(distances_withoutP,method="ward.D")
+cluster2_withP <- hclust(distances_withP,method="ward.D")
 ```
 
 ```{r echo=FALSE}
-plot(cluster2_withoutp, main="Clusters without including Pressure data")
+plot(cluster2_withoutp, main="Clusters without including Pressure data", xlab="Floods", ylab = "Height", axes=FALSE)
 groups <- cutree(cluster2_withoutp, k=5)
 rect.hclust(cluster2_withoutp, k=5, border="red") 
-plot(cluster2_withP, main="Clusters after including Pressure data")
+plot(cluster2_withP, main="Clusters after including Pressure data", xlab="Floods", ylab = "Height")
 groups <- cutree(cluster2_withP, k=5)
 rect.hclust(cluster2_withP, k=5, border="red") 
 ```
