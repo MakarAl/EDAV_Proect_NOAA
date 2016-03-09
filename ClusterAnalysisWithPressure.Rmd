@@ -259,11 +259,11 @@ We now move to perform PCA on these two different datasets and see how the princ
 ```{r echo=FALSE}
 #PCA
 withoutP.pca <- prcomp(newFrame_withoutP,center=TRUE,scale=TRUE)
-plot(withoutP.pca, type="l",main="PCA of floods without Pressure variables", xlab="Principal Components")
+plot(withoutP.pca, type="l",main="PCA of floods without Pressure variables (PCs vs Variances)")
 pca_withoutP <- predict(withoutP.pca,newFrame_withoutP)
 
 withP.pca <- prcomp(newFrame_withP,center=TRUE,scale=TRUE)
-plot(withP.pca, type="l", main="PCA of floods including Pressure variables", xlab="Principal Components")
+plot(withP.pca, type="l", main="PCA of floods including Pressure variables (PCs vs Variances)")
 
 ```
 
@@ -287,7 +287,7 @@ cluster2_withP <- hclust(distances_withP,method="ward.D")
 ```
 
 ```{r echo=FALSE}
-plot(cluster2_withoutp, main="Clusters without including Pressure data", xlab="Floods", ylab = "Height", axes=FALSE)
+plot(cluster2_withoutp, main="Clusters without including Pressure data", xlab="Floods", ylab = "Height")
 groups <- cutree(cluster2_withoutp, k=5)
 rect.hclust(cluster2_withoutp, k=5, border="red") 
 plot(cluster2_withP, main="Clusters after including Pressure data", xlab="Floods", ylab = "Height")
